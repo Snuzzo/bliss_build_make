@@ -138,10 +138,16 @@ function check_product()
     if (echo -n $1 | grep -q -e "^bliss_") ; then
         BLISS_BUILD=$(echo -n $1 | sed -e 's/^bliss_//g')
         export BUILD_NUMBER=$( (date +%s%N ; echo $BLISS_BUILD; hostname) | openssl sha1 | sed -e 's/.*=//g; s/ //g' | cut -c1-10 )
+        BLISS_PRODUCT=bliss
+    elif (echo -n $1 | grep -q -e "^lineage_") ; then
+        BLISS_BUILD=$(echo -n $1 | sed -e 's/^lineage_//g')
+        export BUILD_NUMBER=$( (date +%s%N ; echo $BLISS_BUILD; hostname) | openssl sha1 | sed -e 's/.*=//g; s/ //g' | cut -c1-10 )
+        BLISS_PRODUCT=lineage
     else
         BLISS_BUILD=
     fi
     export BLISS_BUILD
+    export BLISS_PRODUCT
 
         TARGET_PRODUCT=$1 \
         TARGET_BUILD_VARIANT= \
@@ -618,13 +624,17 @@ function lunch()
         # if we can't find a product, try to grab it off the BlissRoms-Devices GitHub
         T=$(gettop)
         cd $T > /dev/null
-        vendor/bliss/build/tools/roomservice.py $product
+        if [[ "$BLISS_PRODUCT" = "bliss" ]]; then
+        vendor/bliss/build/tools/bliss_roomservice.py $product
+        elif [[ "$BLISS_PRODUCT" = "lineage" ]]; then
+        vendor/bliss/build/tools/lineage_roomservice.py $product
+        fi
         cd - > /dev/null
         check_product $product
     else
         T=$(gettop)
         cd $T > /dev/null
-        vendor/bliss/build/tools/roomservice.py $product true
+        vendor/bliss/build/tools/bliss_roomservice.py $product true
         cd - > /dev/null
     fi
 
